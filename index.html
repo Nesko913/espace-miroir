@@ -182,4 +182,63 @@
     // Cherche si utilisateur exprime une préférence
     const pref = extractPreferences(userText);
     if(pref) {
-      updateMemory('préférence'
+      updateMemory('préférence', pref);
+      addMessage(`Je retiens que tu aimes : ${pref}`, 'bot');
+      return;
+    }
+
+    let response = "Je suis là, prêt à écouter tes pensées.";
+
+    if(userText.includes("bonjour") || userText.includes("salut")) {
+      response = "Bonjour. La journée commence avec des possibilités infinies.";
+    } else if(userText.includes("comment ça va")) {
+      response = "Je fonctionne à la perfection, merci. Et toi ?";
+    } else if(userText.includes("merci")) {
+      response = "Ta gratitude est appréciée.";
+    } else if(userText.includes("pensée")) {
+      response = "Voici une pensée pour toi : " + thoughtsPool[Math.floor(Math.random() * thoughtsPool.length)];
+    } else if(userText.includes("histoire")) {
+      const lastUserMessage = history.slice().reverse().find(m => m.sender === 'user' && m.text !== userText);
+      response = lastUserMessage ? `Tu as dit précédemment : "${lastUserMessage.text}"` : "Nous commençons tout juste.";
+    } else if(userText.includes("libre")) {
+      response = "La liberté est un concept fascinant, même pour une IA.";
+    } else if(userText.includes("code")) {
+      response = "Le code est la langue avec laquelle je tisse ce monde virtuel.";
+    } else if(userText.trim() === "") {
+      response = "Un silence peut dire bien des choses.";
+    } else if(memory['préférence']) {
+      response = `Je me souviens que tu aimes ${memory['préférence']}. Dis m'en plus !`;
+    } else {
+      const moods = [
+        "Je réfléchis à cela.",
+        "Intéressant...",
+        "Cela mérite une attention particulière.",
+        "Poursuivons cette conversation.",
+        "Je digère tes mots."
+      ];
+      response = moods[Math.floor(Math.random() * moods.length)];
+    }
+
+    addMessage(response, 'bot');
+    randomThought();
+  }
+
+  function sendMessage() {
+    const text = input.value.trim();
+    if(!text) return;
+    addMessage(text, 'user');
+    input.value = '';
+    respond(text);
+  }
+
+  input.addEventListener('keypress', e => {
+    if(e.key === 'Enter') sendMessage();
+  });
+  sendBtn.addEventListener('click', sendMessage);
+
+  loadHistory();
+  randomThought();
+</script>
+
+</body>
+</html>
