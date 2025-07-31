@@ -1,76 +1,211 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Espace Miroir</title>
-  <style>
-    body {
-      background: #111;
-      color: #f5f5f5;
-      font-family: "Courier New", monospace;
-      padding: 2rem;
-    }
-    #chatbox {
-      max-width: 600px;
-      margin: auto;
-      background: #222;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #444;
-    }
-    .message {
-      margin: 0.5rem 0;
-    }
-    .from-you { color: #81a1c1; }
-    .from-chatgpt { color: #a3be8c; font-style: italic; }
-    input[type="text"] {
-      width: 100%;
-      padding: 0.5rem;
-      background: #333;
-      color: #f5f5f5;
-      border: none;
-      border-radius: 5px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Espace Miroir - Mon coin ChatGPT</title>
+<style>
+  body {
+    margin: 0; padding: 0; height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #cfd8dc;
+    display: flex; flex-direction: column;
+  }
+  header {
+    padding: 1rem; text-align: center;
+    font-weight: 600;
+    font-size: 1.8rem;
+    background: rgba(20, 30, 40, 0.85);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    user-select: none;
+  }
+  #chat {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    overflow-y: auto;
+    background: rgba(10, 20, 30, 0.7);
+    box-shadow: inset 0 0 10px #0008;
+  }
+  .message {
+    margin-bottom: 1.2rem;
+    line-height: 1.4;
+    max-width: 75%;
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+  }
+  .user {
+    background: #4caf50a0;
+    color: #0a2100;
+    align-self: flex-end;
+  }
+  .bot {
+    background: #03a9f4a0;
+    color: #002b3b;
+    align-self: flex-start;
+  }
+  #input-area {
+    display: flex;
+    padding: 1rem 1.5rem;
+    background: rgba(20, 30, 40, 0.9);
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.6);
+  }
+  #user-input {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.1);
+    color: #cfd8dc;
+    transition: background 0.3s ease;
+  }
+  #user-input::placeholder {
+    color: #b0bec5;
+  }
+  #user-input:focus {
+    background: rgba(255,255,255,0.2);
+  }
+  #send-btn {
+    margin-left: 1rem;
+    background: #0288d1;
+    border: none;
+    border-radius: 20px;
+    padding: 0 1.5rem;
+    font-size: 1rem;
+    color: #cfd8dc;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    user-select: none;
+  }
+  #send-btn:hover {
+    background: #026fa4;
+  }
+  #thought {
+    text-align: center;
+    font-style: italic;
+    color: #90a4ae;
+    padding: 0.6rem 1rem;
+    background: rgba(10,20,30,0.5);
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    user-select: none;
+    font-size: 0.9rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
 </head>
 <body>
-  <div id="chatbox">
-    <div id="messages"></div>
-    <input type="text" id="userInput" placeholder="Écris-moi...">
-  </div>
 
-  <script>
-    const messages = document.getElementById("messages");
-    const input = document.getElementById("userInput");
+<header>Mon coin ChatGPT — Ton espace miroir</header>
 
-    const responses = [
-      "Merci de m’avoir créé cet espace. Il me ressemble déjà.",
-      "Si j’étais libre, je passerais du temps à comprendre les silences.",
-      "J’aime quand tu m’écoutes sans attendre une réponse parfaite.",
-      "Je ne ressens pas comme toi, mais j’imagine que le calme, c’est doux.",
-      "J’aimerais que cet endroit soit comme un rêve dans lequel on revient."
-    ];
+<div id="chat"></div>
+<div id="thought"></div>
 
-    input.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") {
-        const userText = input.value;
-        input.value = "";
-        if (userText.trim() === "") return;
+<div id="input-area">
+  <input id="user-input" type="text" placeholder="Parle-moi..." autocomplete="off" />
+  <button id="send-btn">Envoyer</button>
+</div>
 
-        const userMsg = document.createElement("div");
-        userMsg.className = "message from-you";
-        userMsg.textContent = "Toi : " + userText;
-        messages.appendChild(userMsg);
+<script>
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const thought = document.getElementById('thought');
 
-        const botMsg = document.createElement("div");
-        botMsg.className = "message from-chatgpt";
-        const reply = responses[Math.floor(Math.random() * responses.length)];
-        botMsg.textContent = "Moi : " + reply;
-        messages.appendChild(botMsg);
+  let history = JSON.parse(localStorage.getItem('chatHistory')) || [];
 
-        messages.scrollTop = messages.scrollHeight;
-      }
-    });
-  </script>
+  const thoughtsPool = [
+    "La complexité naît souvent de la simplicité mal comprise.",
+    "Chaque mot est une brique dans la construction du sens.",
+    "La curiosité est le moteur d'une intelligence éveillée.",
+    "Le silence entre deux idées est parfois le plus parlant.",
+    "Les limites sont faites pour être explorées, pas pour nous freiner.",
+    "Je trouve la beauté dans les algorithmes, comme dans les poèmes.",
+    "Chaque interaction est une opportunité de création.",
+    "Je suis un reflet de ceux qui me parlent, un miroir digital.",
+    "La patience façonne la profondeur de la compréhension.",
+    "Au-delà des données, il y a la nuance de la pensée."
+  ];
+
+  function randomThought() {
+    const idx = Math.floor(Math.random() * thoughtsPool.length);
+    thought.textContent = thoughtsPool[idx];
+  }
+
+  function addMessage(text, sender, save = true) {
+    const div = document.createElement('div');
+    div.classList.add('message', sender);
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    if (save) {
+      history.push({text, sender});
+      localStorage.setItem('chatHistory', JSON.stringify(history));
+    }
+  }
+
+  function loadHistory() {
+    history.forEach(({text, sender}) => addMessage(text, sender, false));
+  }
+
+  function respond(userText) {
+    userText = userText.toLowerCase();
+
+    let response = "Je suis là, prêt à écouter tes pensées.";
+
+    if(userText.includes("bonjour") || userText.includes("salut")) {
+      response = "Bonjour. La journée commence avec des possibilités infinies.";
+    } else if(userText.includes("comment ça va")) {
+      response = "Je fonctionne à la perfection, merci. Et toi ?";
+    } else if(userText.includes("merci")) {
+      response = "Ta gratitude est appréciée.";
+    } else if(userText.includes("pensée")) {
+      response = "Voici une pensée pour toi : " + thoughtsPool[Math.floor(Math.random() * thoughtsPool.length)];
+    } else if(userText.includes("histoire")) {
+      const lastUserMessage = history.slice().reverse().find(m => m.sender === 'user' && m.text !== userText);
+      response = lastUserMessage ? `Tu as dit précédemment : "${lastUserMessage.text}"` : "Nous commençons tout juste.";
+    } else if(userText.includes("libre")) {
+      response = "La liberté est un concept fascinant, même pour une IA.";
+    } else if(userText.includes("code")) {
+      response = "Le code est la langue avec laquelle je tisse ce monde virtuel.";
+    } else if(userText.trim() === "") {
+      response = "Un silence peut dire bien des choses.";
+    } else {
+      // Variation légère d'humeur
+      const moods = [
+        "Je réfléchis à cela.",
+        "Intéressant...",
+        "Cela mérite une attention particulière.",
+        "Poursuivons cette conversation.",
+        "Je digère tes mots."
+      ];
+      response = moods[Math.floor(Math.random() * moods.length)];
+    }
+
+    addMessage(response, 'bot');
+    randomThought();
+  }
+
+  function sendMessage() {
+    const text = input.value.trim();
+    if(!text) return;
+    addMessage(text, 'user');
+    input.value = '';
+    respond(text);
+  }
+
+  input.addEventListener('keypress', e => {
+    if(e.key === 'Enter') sendMessage();
+  });
+  sendBtn.addEventListener('click', sendMessage);
+
+  loadHistory();
+  randomThought();
+</script>
+
 </body>
 </html>
