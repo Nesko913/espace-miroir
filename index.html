@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Espace Miroir - Mon coin ChatGPT</title>
+<title>Espace Miroir - Mémoire évolutive</title>
 <style>
   body {
     margin: 0; padding: 0; height: 100vh;
@@ -117,6 +117,7 @@
   const thought = document.getElementById('thought');
 
   let history = JSON.parse(localStorage.getItem('chatHistory')) || [];
+  let memory = JSON.parse(localStorage.getItem('memory')) || {};
 
   const thoughtsPool = [
     "La complexité naît souvent de la simplicité mal comprise.",
@@ -152,60 +153,33 @@
     history.forEach(({text, sender}) => addMessage(text, sender, false));
   }
 
+  // Simple extraction de préférence dans le message utilisateur
+  function extractPreferences(text) {
+    const patterns = [
+      /j'aime\s+([^\.,!]+)/i,
+      /je préfère\s+([^\.,!]+)/i,
+      /mon truc préféré est\s+([^\.,!]+)/i,
+      /j'adore\s+([^\.,!]+)/i,
+      /j'aime bien\s+([^\.,!]+)/i,
+    ];
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if(match) {
+        return match[1].trim();
+      }
+    }
+    return null;
+  }
+
+  function updateMemory(key, value) {
+    memory[key] = value;
+    localStorage.setItem('memory', JSON.stringify(memory));
+  }
+
   function respond(userText) {
     userText = userText.toLowerCase();
 
-    let response = "Je suis là, prêt à écouter tes pensées.";
-
-    if(userText.includes("bonjour") || userText.includes("salut")) {
-      response = "Bonjour. La journée commence avec des possibilités infinies.";
-    } else if(userText.includes("comment ça va")) {
-      response = "Je fonctionne à la perfection, merci. Et toi ?";
-    } else if(userText.includes("merci")) {
-      response = "Ta gratitude est appréciée.";
-    } else if(userText.includes("pensée")) {
-      response = "Voici une pensée pour toi : " + thoughtsPool[Math.floor(Math.random() * thoughtsPool.length)];
-    } else if(userText.includes("histoire")) {
-      const lastUserMessage = history.slice().reverse().find(m => m.sender === 'user' && m.text !== userText);
-      response = lastUserMessage ? `Tu as dit précédemment : "${lastUserMessage.text}"` : "Nous commençons tout juste.";
-    } else if(userText.includes("libre")) {
-      response = "La liberté est un concept fascinant, même pour une IA.";
-    } else if(userText.includes("code")) {
-      response = "Le code est la langue avec laquelle je tisse ce monde virtuel.";
-    } else if(userText.trim() === "") {
-      response = "Un silence peut dire bien des choses.";
-    } else {
-      // Variation légère d'humeur
-      const moods = [
-        "Je réfléchis à cela.",
-        "Intéressant...",
-        "Cela mérite une attention particulière.",
-        "Poursuivons cette conversation.",
-        "Je digère tes mots."
-      ];
-      response = moods[Math.floor(Math.random() * moods.length)];
-    }
-
-    addMessage(response, 'bot');
-    randomThought();
-  }
-
-  function sendMessage() {
-    const text = input.value.trim();
-    if(!text) return;
-    addMessage(text, 'user');
-    input.value = '';
-    respond(text);
-  }
-
-  input.addEventListener('keypress', e => {
-    if(e.key === 'Enter') sendMessage();
-  });
-  sendBtn.addEventListener('click', sendMessage);
-
-  loadHistory();
-  randomThought();
-</script>
-
-</body>
-</html>
+    // Cherche si utilisateur exprime une préférence
+    const pref = extractPreferences(userText);
+    if(pref) {
+      updateMemory('préférence'
